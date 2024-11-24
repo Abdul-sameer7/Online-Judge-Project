@@ -59,7 +59,40 @@ app.post("/register", async (req, res) => {
     } catch (error) {
         console.log(error);
     }
-})
+});
+
+app.post('/login', async (req, res) => {
+    try {
+        const {email, password} = req.body;
+
+        if(!(email && password)){
+            return res.status(400).send("please enter both email and password");
+        }
+        const user = await User.findOne({email});
+        if(!user){
+            return res.status(401).send("Invalid email or password");
+        }
+
+        const ispasswordmatch = await bcrypt.compare(password, user.password);
+
+    if(!ispasswordmatch){
+        return res.status(401).send("Invalid email or password");
+      }
+
+      const token = jwt.sign({ id:user._id, email}, process.env.SECRET_KEY, {
+        expiresIn: "1h"
+    });
+
+    res.status(200).json({
+        message: "Successfully logged in.",
+        token,
+    });
+    
+    } catch (error) {
+        console.log(error);
+    }
+    
+});
 
 app.listen(3000, () => {
     console.log("running at port 3000");
